@@ -2,8 +2,11 @@
 
 import { useProducts } from "@/hooks/useProduct";
 import { useCart } from "@/context/CartContext";
+import useAuthRedirect from "@/hooks/useAuthRedirect";
 
 export default function ProductsPage() {
+    useAuthRedirect();
+
     const { products, loading, error } = useProducts();
     const { cart, addToCart, removeFromCart } = useCart();
 

@@ -1,6 +1,19 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            router.push("/login");
+        }
+    }, [router]);
+
     return (
         <div className="bg-gray-100 min-h-screen flex items-center justify-center">
             <div className="max-w-4xl p-6 bg-white shadow-md rounded-md text-center">
