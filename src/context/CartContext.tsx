@@ -24,12 +24,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCart((prevCart) => {
             const existingItem = prevCart.find((item) => item.id === product.id);
             if (existingItem) {
-                // Si l'article existe déjà, augmentez la quantité
                 return prevCart.map((item) =>
                     item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
                 );
             }
-            // Sinon, ajoutez-le avec une quantité de 1
             return [...prevCart, { ...product, quantity: 1 }];
         });
     };
@@ -38,12 +36,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCart((prevCart) => {
             const existingItem = prevCart.find((item) => item.id === productId);
             if (existingItem && existingItem.quantity > 1) {
-                // Diminuez la quantité si elle est supérieure à 1
                 return prevCart.map((item) =>
                     item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
                 );
             }
-            // Sinon, retirez complètement l'article
             return prevCart.filter((item) => item.id !== productId);
         });
     };

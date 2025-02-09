@@ -7,6 +7,7 @@ import { config } from './config';
 import './globals.css';
 import Link from "next/link";
 import {CartProvider, useCart} from "@/context/CartContext";
+import { useRouter } from "next/navigation";
 
 const queryClient = new QueryClient();
 
@@ -15,7 +16,37 @@ function Header() {
     const { disconnect } = useDisconnect();
     const { isConnected, isConnecting } = useAccount();
     const { cart, cartTotal } = useCart();
-    const [isDropdownVisible, setDropdownVisible] = useState(false); // État pour la visibilité de la liste déroulante
+    const [isDropdownVisible, setDropdownVisible] = useState(false);
+    const [hasToken, setHasToken] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const checkToken = () => {
+            const token = localStorage.getItem("token");
+            setHasToken(!!token);
+        };
+
+        checkToken();
+        window.addEventListener("storage", checkToken);
+
+        return () => {
+            window.removeEventListener("storage", checkToken);
+        };
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        setHasToken(false);
+        router.push("/login");
+    };
+
+    const handleCheckout = () => {
+        if (cart.length === 0) {
+            alert("Your cart is empty. Please add some products.");
+        } else {
+            router.push("/checkout");
+        }
+    };
 
     const toggleDropdown = () => {
         setDropdownVisible((prev) => !prev);
@@ -23,7 +54,17 @@ function Header() {
 
     return (
         <header className="header">
-            <h1>Blockchain App</h1>
+            <div className="flex items-center space-x-4">
+                <h1 className="text-2xl font-bold">Blockchain App</h1>
+                {hasToken && (
+                    <button
+                        onClick={handleLogout}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                    >
+                        Déconnexion
+                    </button>
+                )}
+            </div>
 
             <div className="header-buttons">
                 <Link href="/">
@@ -32,35 +73,6 @@ function Header() {
                 <Link href="/products">
                     <button>Products</button>
                 </Link>
-
-                {/* Cart button */}
-                <div className="relative">
-                    <button
-                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-                        onClick={toggleDropdown} // Toggle the dropdown visibility
-                    >
-                        Cart ({cart.length}) - ${cartTotal.toFixed(2)}
-                    </button>
-
-                    {/* Dropdown menu */}
-                    {isDropdownVisible && (
-                        <div className="absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded z-10">
-                            {cart.length === 0 ? (
-                                <p className="p-4 text-gray-500">Your cart is empty</p>
-                            ) : (
-                                <ul className="p-4 max-h-64 overflow-y-auto space-y-2">
-                                    {cart.map((product, index) => (
-                                        <li key={index} className="flex justify-between items-center">
-                                            <span className="text-sm font-semibold">{product.title}</span>
-                                            <span className="text-sm text-gray-600">x{product.quantity}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    )}
-                </div>
-
                 {!isConnected ? (
                     <div>
                         {connectors.map((connector) => (
@@ -78,6 +90,61 @@ function Header() {
                         <button onClick={() => disconnect()}>Disconnect</button>
                     </div>
                 )}
+                {/* Cart button */}
+                <div className="relative">
+                    <button
+                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                        onClick={toggleDropdown}
+                    >
+                        Cart ({cart.length}) - ${cartTotal.toFixed(2)}
+                    </button>
+
+                    {/* Dropdown menu */}
+                    {isDropdownVisible && (
+                        <div className="absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded z-10">
+                            {/* Cart items */}
+                            {cart.length === 0 ? (
+                                <p className="p-4 text-gray-500">Your cart is empty</p>
+                            ) : (
+                                <div className="p-4 space-y-2">
+                                    <ul className="max-h-64 overflow-y-auto space-y-2">
+                                        {cart.map((product, index) => (
+                                            <li
+                                                key={index}
+                                                className="flex justify-between items-center"
+                                            >
+                                                <div>
+                                                    <span className="block font-bold text-sm">
+                                                        {product.title}
+                                                    </span>
+                                                    <span className="text-gray-500 text-xs">
+                                                        Quantity: {product.quantity}
+                                                    </span>
+                                                </div>
+                                                <span className="text-sm text-gray-600">
+                                                    ${(product.quantity * product.price).toFixed(2)}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    {/* Total */}
+                                    <div className="text-right font-bold">
+                                        Total: ${cartTotal.toFixed(2)}
+                                    </div>
+
+                                    {/* Pay Now button */}
+                                    <button
+                                        className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-4"
+                                        onClick={handleCheckout}
+                                    >
+                                        Pay Now
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </header>
     );
@@ -87,7 +154,7 @@ function Body() {
     const { isConnected, address, chain } = useAccount();
     const { data: balance } = useBalance({ address });
 
-    const allowedChains = [1, 11155111]; // Ethereum Mainnet and Sepolia Testnet
+    const allowedChains = [1, 11155111];
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
