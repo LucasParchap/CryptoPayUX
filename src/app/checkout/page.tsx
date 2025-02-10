@@ -14,8 +14,8 @@ export default function CheckoutPage() {
     const { address, isConnected } = useAccount();
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const tokenAddress = '0x79169dDE8d0401DD52deb5396c4E5D56fAFbb383'; // Ton contrat ERC-20
-    const paymentProcessorAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3'; // Contrat PaymentProcessor
+    const tokenAddress = '0x79169dDE8d0401DD52deb5396c4E5D56fAFbb383';
+    const paymentProcessorAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
     async function handleAuthorize() {
         if (!isConnected) {
@@ -65,8 +65,8 @@ export default function CheckoutPage() {
             const tokenContract = new ethers.Contract(tokenAddress, tokenAbi, signer);
 
             // Configuration du transfert
-            const recipientAddress = "0xCD390A9f3F1039139cB14928D29607b1E1E90DDD"; // Adresse du marchand
-            const amountToSend = ethers.utils.parseUnits(cartTotal.toString(), 18); // Convertir le montant en BigNumber
+            const recipientAddress = "0xCD390A9f3F1039139cB14928D29607b1E1E90DDD";
+            const amountToSend = ethers.utils.parseUnits(convertedToEtherium.toString(), 18);
 
             // Appel de `transfer`
             const tx = await tokenContract.transfer(recipientAddress, amountToSend);

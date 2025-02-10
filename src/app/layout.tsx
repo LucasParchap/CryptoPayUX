@@ -15,7 +15,7 @@ function Header() {
     const { connect, connectors } = useConnect();
     const { disconnect } = useDisconnect();
     const { isConnected, isConnecting } = useAccount();
-    const { cart, cartTotal, convertedToEtherium } = useCart();
+    const { cart, cartTotal, convertedToEtherium  } = useCart();
     const [isDropdownVisible, setDropdownVisible] = useState(false);
     const [hasToken, setHasToken] = useState(false);
     const router = useRouter();
@@ -72,6 +72,9 @@ function Header() {
                 </Link>
                 <Link href="/products">
                     <button>Products</button>
+                </Link>
+                <Link href="/transactions">
+                    <button>Transactions</button>
                 </Link>
                 {!isConnected ? (
                     <div>
