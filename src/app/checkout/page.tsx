@@ -6,7 +6,7 @@ import useAuthRedirect from "@/hooks/useAuthRedirect";
 
 export default function CheckoutPage() {
     useAuthRedirect();
-    const { cart, cartTotal } = useCart();
+    const { cart, cartTotal, convertedToEtherium } = useCart();
 
     return (
         <div className="p-6">
@@ -35,6 +35,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="text-right font-bold text-lg mb-6">Total: ${cartTotal.toFixed(2)}</div>
+            <div className="text-right font-bold text-lg mb-6">Crypto: ${convertedToEtherium}</div>
 
             <div className="flex justify-between">
                 <Link href="/products">

@@ -15,7 +15,7 @@ function Header() {
     const { connect, connectors } = useConnect();
     const { disconnect } = useDisconnect();
     const { isConnected, isConnecting } = useAccount();
-    const { cart, cartTotal } = useCart();
+    const { cart, cartTotal, convertedToEtherium } = useCart();
     const [isDropdownVisible, setDropdownVisible] = useState(false);
     const [hasToken, setHasToken] = useState(false);
     const router = useRouter();
@@ -131,6 +131,8 @@ function Header() {
                                     {/* Total */}
                                     <div className="text-right font-bold">
                                         Total: ${cartTotal.toFixed(2)}
+                                        <br/>
+                                        Converted: ${convertedToEtherium}
                                     </div>
 
                                     {/* Pay Now button */}
