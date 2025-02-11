@@ -135,7 +135,7 @@ function Header() {
                                     <div className="text-right font-bold">
                                         Total: ${cartTotal.toFixed(2)}
                                         <br/>
-                                        Converted: ${convertedToEtherium}
+                                        Converted: ◆{convertedToEtherium}
                                     </div>
 
                                     {/* Pay Now button */}
