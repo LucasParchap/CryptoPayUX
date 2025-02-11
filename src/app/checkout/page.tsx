@@ -3,10 +3,99 @@
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { ethers } from 'ethers';
+import { useState } from 'react';
 
 export default function CheckoutPage() {
     useAuthRedirect();
-    const { cart, cartTotal } = useCart();
+
+    const { cart, cartTotal, convertedToEtherium } = useCart();
+    const { address, isConnected } = useAccount();
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const tokenAddress = '0x79169dDE8d0401DD52deb5396c4E5D56fAFbb383';
+    const paymentProcessorAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+
+    async function handleAuthorize() {
+        if (!isConnected) {
+            alert('Please connect your wallet first.');
+            return;
+        }
+
+        try {
+            setIsProcessing(true);
+
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+
+            const tokenAbi = ['function approve(address spender, uint256 amount) public returns (bool)'];
+            const tokenContract = new ethers.Contract(tokenAddress, tokenAbi, signer);
+
+            const amountToApprove = ethers.constants.MaxUint256;
+            const tx = await tokenContract.approve(paymentProcessorAddress, amountToApprove);
+            await tx.wait();
+
+            alert('Authorization successful!');
+        } catch (error) {
+            alert('Authorization failed: ' + error.message);
+        } finally {
+            setIsProcessing(false);
+        }
+    }
+
+    async function handleDirectPayment() {
+        if (!isConnected) {
+            alert('Please connect your wallet first.');
+            return;
+        }
+
+        try {
+            setIsProcessing(true);
+
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+
+            const tokenAbi = ['function transfer(address recipient, uint256 amount) public returns (bool)'];
+            const tokenContract = new ethers.Contract(tokenAddress, tokenAbi, signer);
+
+            const recipientAddress = "0xCD390A9f3F1039139cB14928D29607b1E1E90DDD";
+            const amountToSend = ethers.utils.parseUnits(convertedToEtherium.toString(), 18);
+
+            const tx = await tokenContract.transfer(recipientAddress, amountToSend);
+            console.log("Transaction sent:", tx.hash);
+
+            await tx.wait();
+
+            const transactionDetails = {
+                hash: tx.hash,
+                from: address,
+                to: recipientAddress,
+                value: convertedToEtherium,
+                items: JSON.stringify(cart),
+                date: new Date().toISOString(),
+            };
+
+            const response = await fetch('http://localhost:3003/transactions/transac', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(transactionDetails),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save transaction in database');
+            }
+
+            alert('Payment successful!');
+        } catch (error) {
+            console.error("Payment failed:", error.message);
+            alert('Payment failed: ' + error.message);
+        } finally {
+            setIsProcessing(false);
+        }
+    }
 
     return (
         <div className="p-6">
@@ -35,6 +124,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="text-right font-bold text-lg mb-6">Total: ${cartTotal.toFixed(2)}</div>
+            <div className="text-right font-bold text-lg mb-6">Crypto: ◆{convertedToEtherium}</div>
 
             <div className="flex justify-between">
                 <Link href="/products">
@@ -43,10 +133,18 @@ export default function CheckoutPage() {
                     </button>
                 </Link>
                 <button
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-                    onClick={() => alert("Payment will be implemented later.")}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                    onClick={handleAuthorize}
+                    disabled={isProcessing}
                 >
-                    Pay Now
+                    {isProcessing ? 'Authorizing...' : 'Authorize'}
+                </button>
+                <button
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                    onClick={handleDirectPayment}
+                    disabled={isProcessing}
+                >
+                    {isProcessing ? 'Processing...' : 'Pay Now'}
                 </button>
             </div>
         </div>

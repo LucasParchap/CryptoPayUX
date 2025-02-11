@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Product } from "@/models/Product";
 
 interface CartItem extends Product {
@@ -12,13 +12,49 @@ interface CartContextType {
     addToCart: (product: Product) => void;
     removeFromCart: (productId: number) => void;
     cartTotal: number;
+    convertedToEtherium: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [convertedToEtherium, setConvertedToEtherium] = useState<number>(0);
+
     const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    // Fetch Ethereum conversion whenever cartTotal changes
+    useEffect(() => {
+        if (cartTotal > 0) {
+            const fetchConversion = async () => {
+                try {
+                    const response = await fetch("http://localhost:3003/crypto/convert-fiat", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ montant: cartTotal }), // Use "montant" as in your backend
+                    });
+
+                    console.log(response);
+
+                    if (!response.ok) {
+                        throw new Error("Erreur lors de la conversion de la devise");
+                    }
+
+                    const data = await response.json();
+                    setConvertedToEtherium(data.montant_eth);
+                } catch (error) {
+                    console.error("Erreur de conversion:", error);
+                    setConvertedToEtherium(0); // Reset on failure
+                }
+            };
+
+            fetchConversion();
+        } else {
+            setConvertedToEtherium(0);
+        }
+    }, [cartTotal]); // Runs every time `cartTotal` changes
 
     const addToCart = (product: Product) => {
         setCart((prevCart) => {
@@ -45,7 +81,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, cartTotal }}>
+        <CartContext.Provider value={{ cart, addToCart, removeFromCart, cartTotal, convertedToEtherium }}>
             {children}
         </CartContext.Provider>
     );
